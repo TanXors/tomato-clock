@@ -1,0 +1,53 @@
+{
+  "name": "tomato",
+  "version": "0.1.0",
+  "description": "Windows desktop pomodoro timer",
+  "main": "./dist/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev --outDir=dist",
+    "build": "electron-vite build --outDir=dist",
+    "start": "electron-vite preview --outDir=dist",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "test": "pnpm test:unit",
+    "dist": "pnpm build && electron-builder --win"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.5.2",
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.3"
+  },
+  "build": {
+    "appId": "com.tomato.timer",
+    "productName": "tomato",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
