@@ -35,7 +35,12 @@ export interface TomatoApi {
   showMenuWindow(): Promise<void>;
   showTimerDisplayWindow(): Promise<void>;
   hideTimerDisplayWindow(): Promise<void>;
+  showTimerDisplayContextMenu(): Promise<void>;
+  beginTimerDisplayDrag(screenX: number, screenY: number): Promise<void>;
+  moveTimerDisplayWindow(screenX: number, screenY: number): Promise<void>;
+  endTimerDisplayDrag(): Promise<void>;
   showTimerDetailWindow(): Promise<void>;
+  hideToastWindow(): Promise<void>;
   showSettingsWindow(): Promise<void>;
   againFocus(): Promise<void>;
   finishSession(): Promise<void>;

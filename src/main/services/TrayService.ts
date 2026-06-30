@@ -1,12 +1,16 @@
 import { Menu, Tray, app, nativeImage } from 'electron';
 import { appLifecycle } from '../appLifecycle';
 import { getAppIconPath } from '../appAssets';
+import type { TimerService } from './TimerService';
 import type { WindowService } from './WindowService';
 
 export class TrayService {
   private tray: Tray | null = null;
 
-  constructor(private readonly windowService: WindowService) {}
+  constructor(
+    private readonly windowService: WindowService,
+    private readonly timerService: TimerService
+  ) {}
 
   create(): void {
     if (this.tray) {
@@ -17,7 +21,7 @@ export class TrayService {
     this.tray = new Tray(icon);
     this.tray.setToolTip('tomato');
     this.tray.setContextMenu(this.createMenu());
-    this.tray.on('click', () => this.windowService.showMenuWindow());
+    this.tray.on('click', () => this.showDefaultWindow());
   }
 
   dispose(): void {
@@ -35,10 +39,6 @@ export class TrayService {
         label: '打开计时显示',
         click: () => this.windowService.showTimerDisplayWindow()
       },
-      {
-        label: '查看详情',
-        click: () => this.windowService.showTimerDetailWindow()
-      },
       { type: 'separator' },
       {
         label: '隐藏所有窗口',
@@ -52,5 +52,15 @@ export class TrayService {
         }
       }
     ]);
+  }
+
+  private showDefaultWindow(): void {
+    const snapshot = this.timerService.getSnapshot();
+    if (snapshot.status === 'idle' || snapshot.status === 'completed') {
+      this.windowService.showSettingsWindow();
+      return;
+    }
+
+    this.windowService.showMenuWindow();
   }
 }

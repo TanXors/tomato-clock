@@ -54,8 +54,19 @@ function registerIpcHandlers(): void {
   ipcMain.handle('window:show-menu', () => windowService.showMenuWindow());
   ipcMain.handle('window:show-timer-display', () => windowService.showTimerDisplayWindow());
   ipcMain.handle('window:hide-timer-display', () => windowService.hideTimerDisplayWindow());
+  ipcMain.handle('window:show-timer-display-context-menu', () => windowService.showTimerDisplayContextMenu());
+  ipcMain.handle('window:begin-timer-display-drag', (_event, screenX: number, screenY: number) => {
+    windowService.beginTimerDisplayDrag(screenX, screenY);
+  });
+  ipcMain.handle('window:move-timer-display', (_event, screenX: number, screenY: number) => {
+    windowService.moveTimerDisplayWindow(screenX, screenY);
+  });
+  ipcMain.handle('window:end-timer-display-drag', () => {
+    windowService.endTimerDisplayDrag();
+  });
   ipcMain.handle('window:show-timer-detail', () => windowService.showTimerDetailWindow());
   ipcMain.handle('window:show-settings', () => windowService.showSettingsWindow());
+  ipcMain.handle('window:hide-toast', () => windowService.hideToastWindow());
 
   ipcMain.handle('session:again-focus', () => {
     timerService.resetToIdle(timerService.getSnapshot().settings);
@@ -88,7 +99,7 @@ app.whenReady().then(async () => {
   timerService = new TimerService();
   settingsService = new SettingsService(app.getPath('userData'));
   windowService = new WindowService();
-  trayService = new TrayService(windowService);
+  trayService = new TrayService(windowService, timerService);
   notificationService = new NotificationService();
   hotkeyService = new HotkeyService(windowService);
 

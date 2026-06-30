@@ -17,8 +17,15 @@ const tomatoApi: TomatoApi = {
   showMenuWindow: () => ipcRenderer.invoke('window:show-menu'),
   showTimerDisplayWindow: () => ipcRenderer.invoke('window:show-timer-display'),
   hideTimerDisplayWindow: () => ipcRenderer.invoke('window:hide-timer-display'),
+  showTimerDisplayContextMenu: () => ipcRenderer.invoke('window:show-timer-display-context-menu'),
+  beginTimerDisplayDrag: (screenX: number, screenY: number) =>
+    ipcRenderer.invoke('window:begin-timer-display-drag', screenX, screenY),
+  moveTimerDisplayWindow: (screenX: number, screenY: number) =>
+    ipcRenderer.invoke('window:move-timer-display', screenX, screenY),
+  endTimerDisplayDrag: () => ipcRenderer.invoke('window:end-timer-display-drag'),
   showTimerDetailWindow: () => ipcRenderer.invoke('window:show-timer-detail'),
   showSettingsWindow: () => ipcRenderer.invoke('window:show-settings'),
+  hideToastWindow: () => ipcRenderer.invoke('window:hide-toast'),
   againFocus: () => ipcRenderer.invoke('session:again-focus'),
   finishSession: () => ipcRenderer.invoke('session:finish')
 };

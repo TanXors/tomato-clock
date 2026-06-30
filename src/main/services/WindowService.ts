@@ -19,22 +19,22 @@ interface WindowSpec {
 }
 
 const WINDOW_SPECS: Record<WindowKind, WindowSpec> = {
-  settings: { width: 420, height: 360, frame: true, resizable: false },
-  menu: { width: 320, height: 280, frame: true, resizable: false },
+  settings: { width: 380, height: 520, frame: true, resizable: true },
+  menu: { width: 320, height: 360, frame: true, resizable: true },
   'timer-display': {
-    width: 190,
-    height: 78,
+    width: 176,
+    height: 116,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false
   },
-  'timer-detail': { width: 390, height: 320, frame: true, resizable: false },
-  complete: { width: 360, height: 260, frame: true, resizable: false },
+  'timer-detail': { width: 380, height: 560, frame: true, resizable: true },
+  complete: { width: 380, height: 526, frame: true, resizable: true },
   toast: {
-    width: 300,
-    height: 96,
+    width: 360,
+    height: 92,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -45,6 +45,8 @@ const WINDOW_SPECS: Record<WindowKind, WindowSpec> = {
 
 export class WindowService {
   private readonly windows = new Map<WindowKind, BrowserWindow>();
+
+  private timerDisplayDragStart: { windowX: number; windowY: number; pointerX: number; pointerY: number } | null = null;
 
   private toastTimer: NodeJS.Timeout | null = null;
 
@@ -68,7 +70,73 @@ export class WindowService {
   }
 
   hideTimerDisplayWindow(): void {
+    this.endTimerDisplayDrag();
     this.windows.get('timer-display')?.hide();
+  }
+
+  beginTimerDisplayDrag(screenX: number, screenY: number): void {
+    if (!Number.isFinite(screenX) || !Number.isFinite(screenY)) {
+      return;
+    }
+
+    const window = this.windows.get('timer-display');
+    if (!window || window.isDestroyed()) {
+      return;
+    }
+
+    const bounds = window.getBounds();
+    this.timerDisplayDragStart = {
+      windowX: bounds.x,
+      windowY: bounds.y,
+      pointerX: screenX,
+      pointerY: screenY
+    };
+  }
+
+  moveTimerDisplayWindow(screenX: number, screenY: number): void {
+    if (!Number.isFinite(screenX) || !Number.isFinite(screenY) || !this.timerDisplayDragStart) {
+      return;
+    }
+
+    const window = this.windows.get('timer-display');
+    if (!window || window.isDestroyed()) {
+      return;
+    }
+
+    const spec = WINDOW_SPECS['timer-display'];
+    const offsetX = Math.trunc(screenX - this.timerDisplayDragStart.pointerX);
+    const offsetY = Math.trunc(screenY - this.timerDisplayDragStart.pointerY);
+    window.setBounds(
+      {
+        x: this.timerDisplayDragStart.windowX + offsetX,
+        y: this.timerDisplayDragStart.windowY + offsetY,
+        width: spec.width,
+        height: spec.height
+      },
+      false
+    );
+  }
+
+  endTimerDisplayDrag(): void {
+    this.timerDisplayDragStart = null;
+  }
+
+  showTimerDisplayContextMenu(): void {
+    const window = this.windows.get('timer-display');
+    if (!window || window.isDestroyed()) {
+      return;
+    }
+
+    Menu.buildFromTemplate([
+      {
+        label: '查看详情',
+        click: () => this.showTimerDetailWindow()
+      },
+      {
+        label: '关闭',
+        click: () => this.hideTimerDisplayWindow()
+      }
+    ]).popup({ window });
   }
 
   showTimerDetailWindow(): void {
@@ -87,6 +155,15 @@ export class WindowService {
 
   showFocusCompleteToast(): void {
     this.showToast('focus-complete', 60_000);
+  }
+
+  hideToastWindow(): void {
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+      this.toastTimer = null;
+    }
+
+    this.windows.get('toast')?.hide();
   }
 
   closeVisibleWindows(): void {
@@ -121,15 +198,14 @@ export class WindowService {
   private showToast(type: ToastKind, durationMs: number): void {
     const window = this.getOrCreateWindow('toast');
     this.loadWindow(window, 'toast', { type });
-    this.showBottomRight(window, 18, 112);
+    this.showBottomRight(window, 24, 24);
 
     if (this.toastTimer) {
       clearTimeout(this.toastTimer);
     }
 
     this.toastTimer = setTimeout(() => {
-      window.hide();
-      this.toastTimer = null;
+      this.hideToastWindow();
     }, durationMs);
   }
 
@@ -148,10 +224,12 @@ export class WindowService {
       alwaysOnTop: spec.alwaysOnTop ?? false,
       skipTaskbar: spec.skipTaskbar ?? false,
       resizable: spec.resizable ?? true,
+      minimizable: true,
+      maximizable: spec.resizable ?? true,
       show: false,
       title: 'tomato',
       icon: getAppIconPath('ico'),
-      backgroundColor: spec.transparent ? '#00000000' : '#fff8f0',
+      backgroundColor: spec.transparent ? '#00000000' : '#fbf7ed',
       webPreferences: {
         preload: join(__dirname, '../preload/index.mjs'),
         contextIsolation: true,
@@ -159,6 +237,11 @@ export class WindowService {
         sandbox: false
       }
     });
+
+    if (kind === 'timer-display') {
+      window.setMinimumSize(spec.width, spec.height);
+      window.setMaximumSize(spec.width, spec.height);
+    }
 
     window.on('close', (event) => {
       if (appLifecycle.isQuitting) {
@@ -203,8 +286,15 @@ export class WindowService {
     const display = screen.getPrimaryDisplay();
     const { x, y, width, height } = display.workArea;
     const bounds = window.getBounds();
-
-    window.setPosition(x + width - bounds.width - marginRight, y + height - bounds.height - marginBottom);
+    window.setBounds(
+      {
+        x: x + width - bounds.width - marginRight,
+        y: y + height - bounds.height - marginBottom,
+        width: bounds.width,
+        height: bounds.height
+      },
+      false
+    );
     window.showInactive();
   }
 }

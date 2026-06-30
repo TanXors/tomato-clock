@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { ReactElement } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactElement, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { TimerPhase, TimerSettings, TimerSnapshot } from '../../shared/types';
+import type { TimerPhase, TimerSnapshot } from '../../shared/types';
 import { DEFAULT_TIMER_SETTINGS } from '../../shared/types';
+import focusCompleteAlarmUrl from './assets/focus-complete-alarm.mp3';
 import './styles.css';
 
 type ViewName = 'settings' | 'menu' | 'timer-display' | 'timer-detail' | 'complete' | 'toast';
@@ -99,59 +100,63 @@ function TimerSettingsPage(): ReactElement {
 
   return (
     <main className="app-window settings-window">
-      <section className="panel">
-        <div className="brand-row">
-          <div>
-            <p className="eyebrow">tomato</p>
-            <h1>设置计时</h1>
+      <WindowFrame title="Tomato" lights="two">
+        <section className="panel">
+          <div className="brand-row">
+            <TomatoIcon />
+            <div>
+              <h1>番茄钟</h1>
+              <p className="subtle-text">专注工作，高效休息</p>
+            </div>
           </div>
-          <div className="tomato-mark" aria-hidden="true" />
-        </div>
 
-        <label className="field">
-          <span>专注时间</span>
-          <div className="input-shell">
-            <input
-              min="1"
-              type="number"
-              value={focusMinutes}
-              onChange={(event) => setFocusMinutes(event.target.value)}
-              placeholder={String(DEFAULT_TIMER_SETTINGS.focusMinutes)}
-            />
-            <span>分钟</span>
+          <label className="field">
+            <span>专注时间（分钟）</span>
+            <div className="input-shell">
+              <input
+                min="1"
+                type="number"
+                value={focusMinutes}
+                onChange={(event) => setFocusMinutes(event.target.value)}
+                placeholder={String(DEFAULT_TIMER_SETTINGS.focusMinutes)}
+              />
+              <span>min</span>
+            </div>
+          </label>
+
+          <label className="field">
+            <span>休息时间（分钟）</span>
+            <div className="input-shell">
+              <input
+                min="1"
+                type="number"
+                value={breakMinutes}
+                onChange={(event) => setBreakMinutes(event.target.value)}
+                placeholder={String(DEFAULT_TIMER_SETTINGS.breakMinutes)}
+              />
+              <span>min</span>
+            </div>
+          </label>
+
+          <label className="check-row">
+            <input checked={showTimer} type="checkbox" onChange={(event) => setShowTimer(event.target.checked)} />
+            <span>显示计时</span>
+          </label>
+
+          {error ? <p className="form-error">{error}</p> : null}
+
+          <div className="divider" />
+          <div className="action-row">
+            <button className="primary-button" disabled={!parsedSettings} type="button" onClick={() => void handleStart()}>
+              开始计时
+            </button>
+            <button className="ghost-button" type="button" onClick={() => void handleReset()}>
+              重置
+            </button>
           </div>
-        </label>
-
-        <label className="field">
-          <span>休息时间</span>
-          <div className="input-shell">
-            <input
-              min="1"
-              type="number"
-              value={breakMinutes}
-              onChange={(event) => setBreakMinutes(event.target.value)}
-              placeholder={String(DEFAULT_TIMER_SETTINGS.breakMinutes)}
-            />
-            <span>分钟</span>
-          </div>
-        </label>
-
-        <label className="check-row">
-          <input checked={showTimer} type="checkbox" onChange={(event) => setShowTimer(event.target.checked)} />
-          <span>显示计时</span>
-        </label>
-
-        {error ? <p className="form-error">{error}</p> : null}
-
-        <div className="action-row">
-          <button className="ghost-button" type="button" onClick={() => void handleReset()}>
-            重置设置
-          </button>
-          <button className="primary-button" disabled={!parsedSettings} type="button" onClick={() => void handleStart()}>
-            开始计时
-          </button>
-        </div>
-      </section>
+          <p className="footer-note">默认：专注 45min / 休息 10min</p>
+        </section>
+      </WindowFrame>
     </main>
   );
 }
@@ -178,114 +183,217 @@ function MenuPage(): ReactElement {
 
   return (
     <main className="app-window compact-window">
-      <section className="panel menu-panel">
-        <p className="eyebrow">当前计时</p>
-        <h1>{phaseText(timerState.phase)}</h1>
-        <TimerText seconds={timerState.remainingSeconds} />
+      <WindowFrame title="Tomato · 菜单" lights="two">
+        <section className="panel menu-panel">
+          <div className="menu-status-block">
+            <span>当前状态</span>
+            <strong>{phaseText(timerState.phase)}</strong>
+          </div>
+          <div className="menu-remaining-row">
+            <span>剩余时间</span>
+            <strong>{formatSeconds(timerState.remainingSeconds)}</strong>
+          </div>
+          <div className="divider" />
+          <label className="check-row">
+            <input
+              checked={displayVisible}
+              type="checkbox"
+              onChange={(event) => void handleDisplayToggle(event.target.checked)}
+            />
+            <span>显示计时</span>
+          </label>
 
-        <label className="check-row">
-          <input
-            checked={displayVisible}
-            type="checkbox"
-            onChange={(event) => void handleDisplayToggle(event.target.checked)}
-          />
-          <span>显示计时</span>
-        </label>
-
-        <div className="stack-actions">
-          <button
-            className="primary-button"
-            disabled={!isActive}
-            type="button"
-            onClick={() => void (isPaused ? window.tomatoApi.resumeTimer() : window.tomatoApi.pauseTimer())}
-          >
-            {isPaused ? '恢复计时' : '暂停计时'}
-          </button>
-          <button className="ghost-button" disabled={!isActive} type="button" onClick={() => void window.tomatoApi.restartTimer()}>
-            重启计时
-          </button>
-        </div>
-      </section>
+          <div className="stack-actions">
+          {isPaused ? (
+            <button
+              className="success-button wide"
+              disabled={!isActive}
+              type="button"
+              onClick={() => void window.tomatoApi.resumeTimer()}
+            >
+              恢复计时
+            </button>
+          ) : (
+            <button
+              className="danger-button wide"
+              disabled={!isActive}
+              type="button"
+              onClick={() => void window.tomatoApi.pauseTimer()}
+            >
+              暂停计时
+            </button>
+          )}
+            <button
+              className="ghost-button wide"
+              disabled={!isActive}
+              type="button"
+              onClick={() => void window.tomatoApi.restartTimer()}
+            >
+              重启计时
+            </button>
+          </div>
+          <div className="divider" />
+          <div className="setting-row">
+            <span>专注 {timerState.settings.focusMinutes}min</span>
+            <span>休息 {timerState.settings.breakMinutes}min</span>
+          </div>
+        </section>
+      </WindowFrame>
     </main>
   );
 }
 
 function TimerDisplayPage(): ReactElement {
   const timerState = useTimerState();
-  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const activeDragPointerId = useRef<number | null>(null);
+
+  useEffect(() => {
+    document.body.classList.add('is-timer-display');
+    return () => document.body.classList.remove('is-timer-display');
+  }, []);
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLElement>): void {
+    if (event.button !== 0) {
+      return;
+    }
+
+    activeDragPointerId.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    void window.tomatoApi.beginTimerDisplayDrag(event.screenX, event.screenY);
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLElement>): void {
+    if (activeDragPointerId.current !== event.pointerId) {
+      return;
+    }
+
+    void window.tomatoApi.moveTimerDisplayWindow(event.screenX, event.screenY);
+  }
+
+  function finishDrag(event: ReactPointerEvent<HTMLElement>): void {
+    if (activeDragPointerId.current !== event.pointerId) {
+      return;
+    }
+
+    activeDragPointerId.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    void window.tomatoApi.endTimerDisplayDrag();
+  }
+
+  function handleLostPointerCapture(event: ReactPointerEvent<HTMLElement>): void {
+    if (activeDragPointerId.current !== event.pointerId) {
+      return;
+    }
+
+    activeDragPointerId.current = null;
+    void window.tomatoApi.endTimerDisplayDrag();
+  }
 
   return (
     <main
       className="display-window"
-      onClick={() => setMenuPosition(null)}
+      onLostPointerCapture={handleLostPointerCapture}
       onContextMenu={(event) => {
         event.preventDefault();
-        setMenuPosition({ x: event.clientX, y: event.clientY });
+        void window.tomatoApi.showTimerDisplayContextMenu();
       }}
+      onPointerCancel={finishDrag}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={finishDrag}
     >
-      <p>{phaseText(timerState.phase)}</p>
+      <div className="display-status">
+        <span />
+        {detailStatusText(timerState.phase)}
+      </div>
       <strong>{formatSeconds(timerState.remainingSeconds)}</strong>
-      {menuPosition ? (
-        <div className="context-menu" style={{ left: menuPosition.x, top: menuPosition.y }}>
-          <button type="button" onClick={() => void window.tomatoApi.showTimerDetailWindow()}>
-            查看详情
-          </button>
-          <button type="button" onClick={() => void window.tomatoApi.hideTimerDisplayWindow()}>
-            关闭
-          </button>
-        </div>
-      ) : null}
+      <p>右键查看选项</p>
     </main>
   );
 }
 
 function TimerDetailPage(): ReactElement {
   const timerState = useTimerState();
+  const progressPercent = Math.round(timerState.progress * 100);
 
   return (
     <main className="app-window detail-window">
-      <section className="panel">
-        <p className="eyebrow">计时详情</p>
-        <h1>{phaseText(timerState.phase)}</h1>
-        <TimerText seconds={timerState.remainingSeconds} />
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${Math.round(timerState.progress * 100)}%` }} />
-        </div>
-        <dl className="detail-list">
-          <div>
-            <dt>状态</dt>
-            <dd>{statusText(timerState.status)}</dd>
+      <WindowFrame title="Tomato · 计时详情" lights="three">
+        <section className="panel detail-panel">
+          <div
+            className="progress-ring"
+            style={{ '--progress-degree': `${Math.round(timerState.progress * 360)}deg` } as CSSProperties}
+            aria-label={`当前进度 ${progressPercent}%`}
+          >
+            <div className="progress-ring-inner">
+              <strong>{formatSeconds(timerState.remainingSeconds)}</strong>
+              <span>剩余</span>
+            </div>
           </div>
-          <div>
-            <dt>专注</dt>
-            <dd>{timerState.settings.focusMinutes} 分钟</dd>
+          <span className="phase-pill">
+            <span />
+            {phaseText(timerState.phase)}
+          </span>
+          <div className="progress-summary">
+            <span>进度</span>
+            <strong>{progressPercent}%</strong>
           </div>
-          <div>
-            <dt>休息</dt>
-            <dd>{timerState.settings.breakMinutes} 分钟</dd>
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
           </div>
-        </dl>
-      </section>
+          <div className="stat-grid">
+            <StatCard value={formatSeconds(timerState.totalSeconds - timerState.remainingSeconds)} label="已用时" />
+            <StatCard value={formatSeconds(timerState.remainingSeconds)} label="剩余" />
+            <StatCard value={`${progressPercent}%`} label="完成" />
+          </div>
+          <div className="divider" />
+          <dl className="detail-list">
+            <div>
+              <dt>计时状态</dt>
+              <dd>{detailStatusText(timerState.phase)}</dd>
+            </div>
+            <div>
+              <dt>专注时长</dt>
+              <dd>{timerState.settings.focusMinutes} 分钟</dd>
+            </div>
+            <div>
+              <dt>休息时长</dt>
+              <dd>{timerState.settings.breakMinutes} 分钟</dd>
+            </div>
+          </dl>
+        </section>
+      </WindowFrame>
     </main>
   );
 }
 
 function TimerCompletePage(): ReactElement {
+  const timerState = useTimerState();
+
   return (
     <main className="app-window complete-window">
-      <section className="panel complete-panel">
-        <div className="tomato-mark large" aria-hidden="true" />
-        <p className="eyebrow">本轮完成</p>
-        <h1>做得很好</h1>
-        <div className="action-row">
-          <button className="ghost-button" type="button" onClick={() => void window.tomatoApi.finishSession()}>
-            结束
-          </button>
-          <button className="primary-button" type="button" onClick={() => void window.tomatoApi.againFocus()}>
-            再次专注
-          </button>
-        </div>
-      </section>
+      <WindowFrame title="Tomato · 计时完成" lights="two">
+        <section className="panel complete-panel">
+          <TomatoIcon large />
+          <h1>计时完成！</h1>
+          <p className="complete-copy">本轮专注和休息都完成了<br />做得很棒，好好休息吧</p>
+          <div className="complete-stats">
+            <StatCard value={String(timerState.settings.focusMinutes)} label="专注 min" />
+            <StatCard value={String(timerState.settings.breakMinutes)} label="休息 min" />
+          </div>
+          <div className="stack-actions">
+            <button className="primary-button wide" type="button" onClick={() => void window.tomatoApi.againFocus()}>
+              再次专注
+            </button>
+            <button className="ghost-button wide" type="button" onClick={() => void window.tomatoApi.finishSession()}>
+              结束
+            </button>
+          </div>
+          <p className="footer-note">点击“结束”将关闭所有页面，程序继续在后台运行</p>
+        </section>
+      </WindowFrame>
     </main>
   );
 }
@@ -293,19 +401,67 @@ function TimerCompletePage(): ReactElement {
 function ToastView({ type }: { type: 'start' | 'focus-complete' }): ReactElement {
   const isFocusComplete = type === 'focus-complete';
 
+  useEffect(() => {
+    if (!isFocusComplete) {
+      return;
+    }
+
+    const alarm = new Audio(focusCompleteAlarmUrl);
+    alarm.loop = false;
+    alarm.volume = 0.72;
+    void alarm.play().catch(() => undefined);
+
+    return () => {
+      alarm.pause();
+      alarm.currentTime = 0;
+    };
+  }, [isFocusComplete]);
+
   return (
-    <main className="toast-window">
-      <div className="toast-dot" />
+    <main className="toast-window" onClick={() => void window.tomatoApi.hideToastWindow()}>
+      <div className={isFocusComplete ? 'toast-icon coffee' : 'toast-icon clock'} aria-hidden="true" />
       <div>
         <p>{isFocusComplete ? '专注结束' : '计时开始'}</p>
         <strong>{isFocusComplete ? '该休息啦' : '进入专注状态'}</strong>
       </div>
+      <span className="toast-close">点击关闭</span>
     </main>
   );
 }
 
 function TimerText({ seconds }: { seconds: number }): ReactElement {
   return <div className="timer-text">{formatSeconds(seconds)}</div>;
+}
+
+function WindowFrame({
+  children
+}: {
+  title: string;
+  lights: 'two' | 'three';
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <article className="window-card">
+      <div className="window-body">{children}</div>
+    </article>
+  );
+}
+
+function TomatoIcon({ large = false }: { large?: boolean }): ReactElement {
+  return (
+    <div className={large ? 'tomato-icon large' : 'tomato-icon'} aria-hidden="true">
+      <span />
+    </div>
+  );
+}
+
+function StatCard({ value, label }: { value: string; label: string }): ReactElement {
+  return (
+    <div className="stat-card">
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
 }
 
 function useTimerState(): TimerSnapshot {
@@ -397,20 +553,16 @@ function phaseText(phase: TimerPhase): string {
   return '未开始';
 }
 
-function statusText(status: TimerSnapshot['status']): string {
-  if (status === 'running') {
-    return '运行中';
+function detailStatusText(phase: TimerPhase): string {
+  if (phase === 'focus') {
+    return '专注';
   }
 
-  if (status === 'paused') {
-    return '已暂停';
+  if (phase === 'break') {
+    return '休息';
   }
 
-  if (status === 'completed') {
-    return '已完成';
-  }
-
-  return '未开始';
+  return '未运行';
 }
 
 const root = document.getElementById('root');

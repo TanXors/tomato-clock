@@ -1,25 +1,9 @@
-import { shell } from 'electron';
-
 export class NotificationService {
-  private focusToneTimers: NodeJS.Timeout[] = [];
-
   playFocusCompletedTone(): void {
-    this.clearTones();
-    this.focusToneTimers = [
-      setTimeout(() => shell.beep(), 0),
-      setTimeout(() => shell.beep(), 700)
-    ];
+    // The focus-complete toast plays the bundled alarm sound in the renderer.
   }
 
   dispose(): void {
-    this.clearTones();
-  }
-
-  private clearTones(): void {
-    for (const timer of this.focusToneTimers) {
-      clearTimeout(timer);
-    }
-
-    this.focusToneTimers = [];
+    // No native resources are held by this service.
   }
 }
