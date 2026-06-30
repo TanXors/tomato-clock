@@ -36,9 +36,9 @@ function App(): ReactElement {
 }
 
 function TimerSettingsPage(): ReactElement {
-  const [focusMinutes, setFocusMinutes] = useState('');
-  const [breakMinutes, setBreakMinutes] = useState('');
-  const [showTimer, setShowTimer] = useState(false);
+  const [focusMinutes, setFocusMinutes] = useState(String(DEFAULT_TIMER_SETTINGS.focusMinutes));
+  const [breakMinutes, setBreakMinutes] = useState(String(DEFAULT_TIMER_SETTINGS.breakMinutes));
+  const [showTimer, setShowTimer] = useState(DEFAULT_TIMER_SETTINGS.showTimer);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -91,9 +91,9 @@ function TimerSettingsPage(): ReactElement {
   }
 
   async function handleReset(): Promise<void> {
-    setFocusMinutes('');
-    setBreakMinutes('');
-    setShowTimer(false);
+    setFocusMinutes(String(DEFAULT_TIMER_SETTINGS.focusMinutes));
+    setBreakMinutes(String(DEFAULT_TIMER_SETTINGS.breakMinutes));
+    setShowTimer(DEFAULT_TIMER_SETTINGS.showTimer);
     setError('');
     await window.tomatoApi.clearSettings();
   }

@@ -238,7 +238,8 @@ export class WindowService {
         preload: join(__dirname, '../preload/index.mjs'),
         contextIsolation: true,
         nodeIntegration: false,
-        sandbox: true
+        // electron-vite emits an ESM preload bundle that must run outside Electron's sandbox.
+        sandbox: false
       }
     });
 
