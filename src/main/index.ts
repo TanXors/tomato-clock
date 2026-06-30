@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron';
 import type { TimerSettings } from '../shared/types';
 import { DEFAULT_TIMER_SETTINGS } from '../shared/types';
 import { appLifecycle } from './appLifecycle';
+import { HotkeyService } from './services/HotkeyService';
 import { NotificationService } from './services/NotificationService';
 import { SettingsService } from './services/SettingsService';
 import { TimerService } from './services/TimerService';
@@ -13,6 +14,7 @@ let settingsService: SettingsService;
 let windowService: WindowService;
 let trayService: TrayService;
 let notificationService: NotificationService;
+let hotkeyService: HotkeyService;
 
 function registerIpcHandlers(): void {
   ipcMain.handle('timer:start', async (_event, settings: TimerSettings) => {
@@ -88,6 +90,7 @@ app.whenReady().then(async () => {
   windowService = new WindowService();
   trayService = new TrayService(windowService);
   notificationService = new NotificationService();
+  hotkeyService = new HotkeyService(windowService);
 
   registerIpcHandlers();
   wireServices();
@@ -95,12 +98,14 @@ app.whenReady().then(async () => {
   const settings = await settingsService.getSettings();
   timerService.resetToIdle(settings);
   trayService.create();
+  hotkeyService.register();
   windowService.showSettingsWindow();
 });
 
 app.on('before-quit', () => {
   appLifecycle.isQuitting = true;
   notificationService?.dispose();
+  hotkeyService?.dispose();
   trayService?.dispose();
   timerService?.dispose();
   windowService?.dispose();

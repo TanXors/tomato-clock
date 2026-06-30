@@ -2,6 +2,7 @@ import { BrowserWindow, Menu, app, screen } from 'electron';
 import { join } from 'node:path';
 import type { TimerSnapshot } from '../../shared/types';
 import { appLifecycle } from '../appLifecycle';
+import { getAppIconPath } from '../appAssets';
 
 type WindowKind = 'settings' | 'menu' | 'timer-display' | 'timer-detail' | 'complete' | 'toast';
 
@@ -149,6 +150,7 @@ export class WindowService {
       resizable: spec.resizable ?? true,
       show: false,
       title: 'tomato',
+      icon: getAppIconPath('ico'),
       backgroundColor: spec.transparent ? '#00000000' : '#fff8f0',
       webPreferences: {
         preload: join(__dirname, '../preload/index.mjs'),

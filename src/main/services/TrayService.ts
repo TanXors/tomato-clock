@@ -1,9 +1,7 @@
 import { Menu, Tray, app, nativeImage } from 'electron';
 import { appLifecycle } from '../appLifecycle';
+import { getAppIconPath } from '../appAssets';
 import type { WindowService } from './WindowService';
-
-const TRAY_ICON =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALUlEQVR42mP8z8AARLJgwiA2SBFI0P8fBgaG/6AqRkYGJgYGBgYGACRIBQ75h6nFAAAAAElFTkSuQmCC';
 
 export class TrayService {
   private tray: Tray | null = null;
@@ -15,7 +13,7 @@ export class TrayService {
       return;
     }
 
-    const icon = nativeImage.createFromDataURL(TRAY_ICON);
+    const icon = nativeImage.createFromPath(getAppIconPath('png')).resize({ width: 16, height: 16 });
     this.tray = new Tray(icon);
     this.tray.setToolTip('tomato');
     this.tray.setContextMenu(this.createMenu());
