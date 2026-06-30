@@ -20,6 +20,14 @@ export class HotkeyService {
       {
         accelerator: 'Control+Alt+M',
         action: () => this.windowService.showMenuWindow()
+      },
+      {
+        accelerator: 'Control+Alt+Shift+T',
+        action: () => this.windowService.hideTimerDisplayWindow()
+      },
+      {
+        accelerator: 'Control+Alt+Shift+M',
+        action: () => this.windowService.hideMenuWindow()
       }
     ];
 

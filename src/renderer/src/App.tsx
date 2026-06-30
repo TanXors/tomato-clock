@@ -308,7 +308,6 @@ function TimerDisplayPage(): ReactElement {
         {detailStatusText(timerState.phase)}
       </div>
       <strong>{formatSeconds(timerState.remainingSeconds)}</strong>
-      <p>右键查看选项</p>
     </main>
   );
 }
@@ -377,7 +376,13 @@ function TimerCompletePage(): ReactElement {
         <section className="panel complete-panel">
           <TomatoIcon large />
           <h1>计时完成！</h1>
-          <p className="complete-copy">本轮专注和休息都完成了<br />做得很棒，好好休息吧</p>
+          <p className="complete-copy">
+            本轮专注和休息都完成了
+            <br />
+            好棒，又完成一次专注！今天也有好好生活哦
+            <br />
+            ฅ^•ﻌ•^ฅ
+          </p>
           <div className="complete-stats">
             <StatCard value={String(timerState.settings.focusMinutes)} label="专注 min" />
             <StatCard value={String(timerState.settings.breakMinutes)} label="休息 min" />

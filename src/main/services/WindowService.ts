@@ -64,6 +64,10 @@ export class WindowService {
     this.showCentered(window);
   }
 
+  hideMenuWindow(): void {
+    this.windows.get('menu')?.hide();
+  }
+
   showTimerDisplayWindow(): void {
     const window = this.getOrCreateWindow('timer-display');
     this.showBottomRight(window, 18, 18);
