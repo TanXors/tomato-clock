@@ -541,13 +541,15 @@ h1 {
 .display-status {
   display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  margin-bottom: 2px;
   color: var(--display-muted);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
 }
 
-.display-status span,
 .phase-pill span {
   width: 8px;
   height: 8px;
@@ -558,13 +560,14 @@ h1 {
 
 .display-window strong {
   display: block;
-  margin-top: 8px;
+  margin-top: 6px;
   color: var(--display-text);
   font-size: 32px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: 2px;
   line-height: 1;
+  text-align: center;
 }
 
 .display-window p {
@@ -755,69 +758,34 @@ h1 {
 }
 
 .toast-icon {
+  display: grid;
   position: relative;
   width: 34px;
   height: 34px;
+  place-items: center;
   border-radius: 10px;
 }
 
 .toast-icon.clock {
   background: #eef6ff;
   border: 1px solid #c9ddf5;
-}
-
-.toast-icon.clock::before {
-  position: absolute;
-  inset: 7px;
-  border: 2px solid #2563eb;
-  border-radius: 50%;
-  content: "";
-}
-
-.toast-icon.clock::after {
-  position: absolute;
-  left: 16px;
-  top: 10px;
-  width: 8px;
-  height: 9px;
-  border-left: 2px solid #2563eb;
-  border-bottom: 2px solid #2563eb;
-  border-radius: 0 0 0 2px;
-  content: "";
+  color: #2563eb;
 }
 
 .toast-icon.coffee {
-  background:
-    linear-gradient(#b45309, #b45309) 12px 7px / 2px 5px no-repeat,
-    linear-gradient(#b45309, #b45309) 17px 5px / 2px 6px no-repeat,
-    linear-gradient(#b45309, #b45309) 22px 7px / 2px 5px no-repeat,
-    #fff6ed;
+  background: #fff6ed;
   border: 1px solid #f4d1ae;
+  color: #b45309;
 }
 
-.toast-icon.coffee::before {
-  position: absolute;
-  left: 8px;
-  top: 14px;
-  width: 16px;
-  height: 10px;
-  border: 2px solid #b45309;
-  border-top: 0;
-  border-radius: 0 0 7px 7px;
-  content: "";
-}
-
-.toast-icon.coffee::after {
-  position: absolute;
-  left: 23px;
-  top: 15px;
-  width: 6px;
-  height: 7px;
-  border-right: 2px solid #b45309;
-  border-bottom: 2px solid #b45309;
-  border-top: 2px solid #b45309;
-  border-radius: 0 7px 7px 0;
-  content: "";
+.toast-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .toast-window p {

@@ -305,7 +305,6 @@ function TimerDisplayPage(): ReactElement {
       onPointerUp={finishDrag}
     >
       <div className="display-status">
-        <span />
         {detailStatusText(timerState.phase)}
       </div>
       <strong>{formatSeconds(timerState.remainingSeconds)}</strong>
@@ -419,13 +418,39 @@ function ToastView({ type }: { type: 'start' | 'focus-complete' }): ReactElement
 
   return (
     <main className="toast-window" onClick={() => void window.tomatoApi.hideToastWindow()}>
-      <div className={isFocusComplete ? 'toast-icon coffee' : 'toast-icon clock'} aria-hidden="true" />
+      <ToastStatusIcon type={isFocusComplete ? 'coffee' : 'clock'} />
       <div>
         <p>{isFocusComplete ? '专注结束' : '计时开始'}</p>
         <strong>{isFocusComplete ? '该休息啦' : '进入专注状态'}</strong>
       </div>
       <span className="toast-close">点击关闭</span>
     </main>
+  );
+}
+
+function ToastStatusIcon({ type }: { type: 'clock' | 'coffee' }): ReactElement {
+  if (type === 'clock') {
+    return (
+      <div className="toast-icon clock" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="7.25" />
+          <path d="M12 7.8v4.5l3.2 2" />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div className="toast-icon coffee" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M7.2 10.2h9.2v4.2a4.1 4.1 0 0 1-4.1 4.1h-1a4.1 4.1 0 0 1-4.1-4.1v-4.2Z" />
+        <path d="M16.4 11.4h1.2a2.2 2.2 0 0 1 0 4.4h-1.2" />
+        <path d="M6.4 20h11.2" />
+        <path d="M9 4.3c-.8.8-.8 1.5 0 2.3" />
+        <path d="M12 3.7c-.8.9-.8 1.7 0 2.6" />
+        <path d="M15 4.3c-.8.8-.8 1.5 0 2.3" />
+      </svg>
+    </div>
   );
 }
 
