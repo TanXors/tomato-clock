@@ -14,11 +14,11 @@ export class SettingsService {
       const raw = await readFile(this.settingsPath, 'utf8');
       return this.parseSettings(raw);
     } catch (error) {
-      if (this.isFileMissing(error)) {
+      if (this.isFileMissing(error) || this.isJsonParseError(error)) {
         return DEFAULT_TIMER_SETTINGS;
       }
 
-      return DEFAULT_TIMER_SETTINGS;
+      throw error;
     }
   }
 
@@ -69,5 +69,9 @@ export class SettingsService {
 
   private isFileMissing(error: unknown): boolean {
     return error instanceof Error && 'code' in error && error.code === 'ENOENT';
+  }
+
+  private isJsonParseError(error: unknown): boolean {
+    return error instanceof SyntaxError;
   }
 }

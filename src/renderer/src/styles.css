@@ -509,16 +509,6 @@ h1 {
   margin-top: 14px;
 }
 
-.timer-text {
-  margin: 18px 0 14px;
-  color: var(--text);
-  font-size: 58px;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-  line-height: 1;
-}
-
 .display-window {
   display: grid;
   align-content: center;

@@ -100,7 +100,7 @@ function TimerSettingsPage(): ReactElement {
 
   return (
     <main className="app-window settings-window">
-      <WindowFrame title="Tomato" lights="two">
+      <WindowFrame>
         <section className="panel">
           <div className="brand-row">
             <TomatoIcon />
@@ -183,7 +183,7 @@ function MenuPage(): ReactElement {
 
   return (
     <main className="app-window compact-window">
-      <WindowFrame title="Tomato · 菜单" lights="two">
+      <WindowFrame>
         <section className="panel menu-panel">
           <div className="menu-status-block">
             <span>当前状态</span>
@@ -246,11 +246,36 @@ function MenuPage(): ReactElement {
 function TimerDisplayPage(): ReactElement {
   const timerState = useTimerState();
   const activeDragPointerId = useRef<number | null>(null);
+  const dragAnimationFrame = useRef<number | null>(null);
+  const pendingPointerPosition = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     document.body.classList.add('is-timer-display');
-    return () => document.body.classList.remove('is-timer-display');
+    return () => {
+      document.body.classList.remove('is-timer-display');
+      if (dragAnimationFrame.current !== null) {
+        cancelAnimationFrame(dragAnimationFrame.current);
+      }
+    };
   }, []);
+
+  function flushPendingMove(): void {
+    const position = pendingPointerPosition.current;
+    pendingPointerPosition.current = null;
+    dragAnimationFrame.current = null;
+
+    if (position) {
+      void window.tomatoApi.moveTimerDisplayWindow(position.x, position.y);
+    }
+  }
+
+  function scheduleMove(screenX: number, screenY: number): void {
+    pendingPointerPosition.current = { x: screenX, y: screenY };
+
+    if (dragAnimationFrame.current === null) {
+      dragAnimationFrame.current = requestAnimationFrame(flushPendingMove);
+    }
+  }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLElement>): void {
     if (event.button !== 0) {
@@ -267,7 +292,7 @@ function TimerDisplayPage(): ReactElement {
       return;
     }
 
-    void window.tomatoApi.moveTimerDisplayWindow(event.screenX, event.screenY);
+    scheduleMove(event.screenX, event.screenY);
   }
 
   function finishDrag(event: ReactPointerEvent<HTMLElement>): void {
@@ -276,6 +301,10 @@ function TimerDisplayPage(): ReactElement {
     }
 
     activeDragPointerId.current = null;
+    if (dragAnimationFrame.current !== null) {
+      cancelAnimationFrame(dragAnimationFrame.current);
+      flushPendingMove();
+    }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -288,6 +317,10 @@ function TimerDisplayPage(): ReactElement {
     }
 
     activeDragPointerId.current = null;
+    if (dragAnimationFrame.current !== null) {
+      cancelAnimationFrame(dragAnimationFrame.current);
+      flushPendingMove();
+    }
     void window.tomatoApi.endTimerDisplayDrag();
   }
 
@@ -318,7 +351,7 @@ function TimerDetailPage(): ReactElement {
 
   return (
     <main className="app-window detail-window">
-      <WindowFrame title="Tomato · 计时详情" lights="three">
+      <WindowFrame>
         <section className="panel detail-panel">
           <div
             className="progress-ring"
@@ -372,7 +405,7 @@ function TimerCompletePage(): ReactElement {
 
   return (
     <main className="app-window complete-window">
-      <WindowFrame title="Tomato · 计时完成" lights="two">
+      <WindowFrame>
         <section className="panel complete-panel">
           <TomatoIcon large />
           <h1>计时完成！</h1>
@@ -459,17 +492,7 @@ function ToastStatusIcon({ type }: { type: 'clock' | 'coffee' }): ReactElement {
   );
 }
 
-function TimerText({ seconds }: { seconds: number }): ReactElement {
-  return <div className="timer-text">{formatSeconds(seconds)}</div>;
-}
-
-function WindowFrame({
-  children
-}: {
-  title: string;
-  lights: 'two' | 'three';
-  children: ReactNode;
-}): ReactElement {
+function WindowFrame({ children }: { children: ReactNode }): ReactElement {
   return (
     <article className="window-card">
       <div className="window-body">{children}</div>

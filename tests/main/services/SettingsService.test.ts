@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -34,6 +34,12 @@ describe('SettingsService', () => {
     await writeFile(join(userDataPath, 'settings.json'), '{bad json', 'utf8');
 
     await expect(service.getSettings()).resolves.toEqual(DEFAULT_TIMER_SETTINGS);
+  });
+
+  it('throws non-recoverable read errors', async () => {
+    await mkdir(join(userDataPath, 'settings.json'));
+
+    await expect(service.getSettings()).rejects.toThrow();
   });
 
   it('clears saved settings', async () => {
