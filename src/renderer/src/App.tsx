@@ -5,6 +5,7 @@ import type { TimerPhase, TimerSnapshot } from '../../shared/types';
 import { DEFAULT_TIMER_SETTINGS } from '../../shared/types';
 import focusCompleteAlarmUrl from './assets/focus-complete-alarm.mp3';
 import './styles.css';
+import { deriveCurrentSnapshot, getNextSnapshotUpdateDelay } from './timerClock';
 
 type ViewName = 'settings' | 'menu' | 'timer-display' | 'timer-detail' | 'complete' | 'toast';
 
@@ -551,36 +552,19 @@ function useTimerState(): TimerSnapshot {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setState((currentState) => deriveCurrentSnapshot(currentState));
-    }, 1000);
+    const delay = getNextSnapshotUpdateDelay(state);
+    if (delay === null) {
+      return;
+    }
 
-    return () => clearInterval(timer);
-  }, []);
+    const timer = setTimeout(() => {
+      setState((currentState) => deriveCurrentSnapshot(currentState));
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [state.expectedPhaseEndAt, state.progress, state.remainingSeconds, state.status]);
 
   return state;
-}
-
-function deriveCurrentSnapshot(snapshot: TimerSnapshot): TimerSnapshot {
-  if (snapshot.status !== 'running' || !snapshot.expectedPhaseEndAt) {
-    return snapshot;
-  }
-
-  const remainingSeconds = Math.max(0, Math.ceil((snapshot.expectedPhaseEndAt - Date.now()) / 1000));
-  const progress =
-    snapshot.totalSeconds === 0
-      ? 0
-      : Math.min(1, Math.max(0, (snapshot.totalSeconds - remainingSeconds) / snapshot.totalSeconds));
-
-  if (remainingSeconds === snapshot.remainingSeconds && progress === snapshot.progress) {
-    return snapshot;
-  }
-
-  return {
-    ...snapshot,
-    remainingSeconds,
-    progress
-  };
 }
 
 function formatSeconds(seconds: number): string {
