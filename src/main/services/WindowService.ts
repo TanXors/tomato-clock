@@ -8,6 +8,8 @@ type WindowKind = 'settings' | 'menu' | 'timer-display' | 'timer-detail' | 'comp
 
 type ToastKind = 'start' | 'focus-complete';
 
+const APP_WINDOW_BACKGROUND_COLOR = '#ffffff';
+
 interface WindowSpec {
   width: number;
   height: number;
@@ -233,7 +235,7 @@ export class WindowService {
       show: false,
       title: 'tomato',
       icon: getAppIconPath('ico'),
-      backgroundColor: spec.transparent ? '#00000000' : '#fbf7ed',
+      backgroundColor: spec.transparent ? '#00000000' : APP_WINDOW_BACKGROUND_COLOR,
       webPreferences: {
         preload: join(__dirname, '../preload/index.mjs'),
         contextIsolation: true,
@@ -283,8 +285,16 @@ export class WindowService {
 
   private showCentered(window: BrowserWindow): void {
     window.center();
-    window.show();
-    window.focus();
+    if (!window.webContents.isLoadingMainFrame()) {
+      window.show();
+      window.focus();
+      return;
+    }
+
+    window.once('ready-to-show', () => {
+      window.show();
+      window.focus();
+    });
   }
 
   private showBottomRight(window: BrowserWindow, marginRight: number, marginBottom: number): void {
